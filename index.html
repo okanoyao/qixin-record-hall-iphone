@@ -42,8 +42,8 @@
     }
     button, input, textarea { font: inherit; }
     button { cursor: pointer; }
-    .app { display: grid; grid-template-columns: var(--sidebar-w) minmax(0, 1fr); height: 100vh; }
-    .sidebar { overflow: auto; border-right: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,250,246,.92)); }
+    .app { display: grid; grid-template-columns: var(--sidebar-w) minmax(0, 1fr); height: 100vh; height: 100dvh; }
+    .sidebar { overflow: auto; -webkit-overflow-scrolling: touch; border-right: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,250,246,.92)); }
     .side-inner { padding: 16px; }
     .picker, .filter-card, .index-card { background: rgba(255,255,255,.78); border: 1px solid var(--line); border-radius: var(--radius); padding: 13px; box-shadow: var(--shadow); margin-bottom: 12px; }
     .picker-title { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
@@ -92,7 +92,7 @@
     .result:hover { border-color: rgba(124,92,134,.34); }
     .result .meta { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
     .result .conv-result-title { color: var(--brand); font-weight: 650; }
-    .main { min-width: 0; height: 100vh; display: flex; flex-direction: column; }
+    .main { min-width: 0; height: 100vh; height: 100dvh; display: flex; flex-direction: column; }
     header { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 8px; padding: 11px 15px; border-bottom: 1px solid var(--line); background: rgba(255,253,249,.78); backdrop-filter: blur(9px); }
     .brand { min-width: 0; font-weight: 800; color: var(--brand); letter-spacing: .03em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     #brandTitle{font-size:15px}
@@ -103,7 +103,7 @@
     .toggle { display: none; width: 36px; height: 36px; align-items: center; justify-content: center; }
     .toggle-lines { display: flex; flex-direction: column; gap: 4px; }
     .toggle-lines span { width: 17px; height: 2px; border-radius: 2px; background: var(--brand); }
-    .chat-container { overflow: auto; min-width: 0; flex: 1; }
+    .chat-container { overflow: auto; -webkit-overflow-scrolling: touch; min-width: 0; flex: 1; }
     .chat { width: min(100%, 980px); margin: 0 auto; padding: 18px; }
     .empty { color: var(--muted); text-align: center; padding: 50px 20px; }
     .msg { margin: 17px 0; }
@@ -112,6 +112,8 @@
     .bubble { max-width: 63%; border: 1px solid var(--line); border-radius: 20px; padding: 12px 14px; background: var(--user-bubble); box-shadow: var(--shadow); }
     .assistant { width: 100%; }
     .assistant .md { border: 1px solid var(--line); border-radius: 16px; padding: 13px; background: var(--assistant-bg); box-shadow: var(--shadow); }
+    .role.system { justify-content: center; }
+    .system-note { width: min(100%, 760px); border: 1px dashed rgba(124,92,134,.28); border-radius: 14px; padding: 11px 13px; background: rgba(124,92,134,.07); color: #5c4d60; }
     .md { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
     .md h1, .md h2, .md h3, .md h4 { line-height: 1.3; margin: 14px 0 7px; }
     .md h1 { font-size: 1.35rem; }
@@ -688,8 +690,8 @@ const $ = (selector) => document.querySelector(selector);
   function extractMessageFromNode(node, nodeId) {
     const message = node?.message;
     if (!message || !message.author) return null;
-    const role = message.author.role;
-    if (role !== "user" && role !== "assistant") return null;
+    const sourceRole = message.author.role;
+    const role = sourceRole === "user" || sourceRole === "assistant" ? sourceRole : "system";
 
     const content = message.content || {};
     const textParts = [];
@@ -732,6 +734,7 @@ const $ = (selector) => document.querySelector(selector);
       nodeId: nodeId || node?.id || message.id,
       messageId: message.id || nodeId,
       role,
+      sourceRole,
       text,
       time: Number(message.create_time || 0),
       model: metadata.model_slug || metadata.default_model_slug || "",
@@ -832,7 +835,7 @@ const $ = (selector) => document.querySelector(selector);
     const roleWrap = document.createElement("div");
     roleWrap.className = `role ${message.role}`;
     const bubble = document.createElement("div");
-    bubble.className = message.role === "user" ? "bubble" : "assistant";
+    bubble.className = message.role === "user" ? "bubble" : message.role === "system" ? "system-note" : "assistant";
     const md = document.createElement("div");
     md.className = "md";
     md.innerHTML = renderMarkdown(message.text || "");
@@ -844,6 +847,12 @@ const $ = (selector) => document.querySelector(selector);
     timestamp.className = "timestamp";
     timestamp.textContent = message.time ? formatTime(message.time, true) : "时间未知";
     footer.appendChild(timestamp);
+    if (message.role === "system") {
+      const source = document.createElement("div");
+      source.className = "model-info";
+      source.textContent = message.sourceRole || "system";
+      footer.appendChild(source);
+    }
     if (message.role === "assistant" && message.model) {
       const model = document.createElement("div");
       model.className = "model-info";
