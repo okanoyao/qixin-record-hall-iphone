@@ -457,7 +457,6 @@ const $ = (selector) => document.querySelector(selector);
 
   function analyzeConversationModels(raw) {
     const slugs = new Set();
-    if (raw?.default_model_slug) slugs.add(String(raw.default_model_slug));
     const mapping = raw?.mapping || {};
     Object.values(mapping).forEach((node) => {
       const metadata = node?.message?.metadata || {};
@@ -469,6 +468,38 @@ const $ = (selector) => document.querySelector(selector);
     slugs.forEach((slug) => labels.add(classifyModel(slug)));
     if (!labels.size) labels.add("其他");
     return { slugs: Array.from(slugs), labels: Array.from(labels).filter(Boolean).sort(sortModelLabels) };
+  }
+
+  function collectModelDetails(raw) {
+    const mapping = raw?.mapping || {};
+    const counts = new Map();
+    Object.values(mapping).forEach((node) => {
+      const message = node?.message;
+      if (!message) return;
+      const metadata = message.metadata || {};
+      const slugs = [
+        metadata.model_slug,
+        metadata.default_model_slug,
+        message.author?.metadata?.model_slug,
+      ].filter(Boolean).map(String);
+      Array.from(new Set(slugs)).forEach((slug) => counts.set(slug, (counts.get(slug) || 0) + 1));
+    });
+    return Array.from(counts.entries())
+      .map(([slug, count]) => ({ slug, count, label: classifyModel(slug) }))
+      .sort((a, b) => sortModelLabels(a.label, b.label) || b.count - a.count || a.slug.localeCompare(b.slug));
+  }
+
+  function formatModelDetails(raw) {
+    const details = collectModelDetails(raw);
+    const lines = [];
+    if (details.length) {
+      lines.push(...details.map((item) => `${item.slug} × ${formatNumber(item.count)}（${item.label}）`));
+    } else {
+      lines.push("消息里没有模型字段");
+    }
+    const topSlug = raw?.default_model_slug ? String(raw.default_model_slug) : "";
+    if (topSlug) lines.push(`窗口默认：${topSlug}`);
+    return lines.join("\n");
   }
 
   function classifyModel(slug) {
@@ -1017,6 +1048,7 @@ const $ = (selector) => document.querySelector(selector);
       <div class="form-row"><label>标题</label><div class="text-box">${escapeHtml(conv.title)}</div></div>
       <div class="form-row"><label>conversation_id</label><div class="text-box">${escapeHtml(conv.id)}</div></div>
       <div class="form-row"><label>模型</label><div class="badges">${conv.modelLabels.map((label) => `<span class="badge">${escapeHtml(label)}</span>`).join("")}</div></div>
+      <div class="form-row"><label>原始模型</label><div class="text-box">${escapeHtml(formatModelDetails(conv.raw))}</div></div>
       <div class="form-row"><label>字符统计</label><div class="text-box">${escapeHtml(formatStatsLine("当前分支", currentStats))}<br>${escapeHtml(formatStatsLine("全部分支", allStats))}</div></div>
       <div class="form-row"><label>标签：用中文逗号或逗号分隔</label><input id="detailTags" value="${escapeHtml(meta.tags.join("，"))}" placeholder="例如：4o言栖，模型机制，情感锚点"></div>
       <div class="form-row"><label>备注</label><textarea id="detailNote" placeholder="给这个窗口留一点自己的说明。">${escapeHtml(meta.note)}</textarea></div>
