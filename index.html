@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>栖心记录馆 iPhone版</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%237c5c86'/%3E%3Ccircle cx='47' cy='17' r='9' fill='%23c7a76c' opacity='.9'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-size='34' font-family='serif' font-weight='700' fill='%23fffdf9'%3E%E6%A0%96%3C/text%3E%3C/svg%3E">
   <!--
     栖心记录馆 · private modified version for personal use.
     Original HTML viewer by 弥雅Miaaa@RedNote.
@@ -100,6 +101,8 @@
     .header-actions { margin-left: auto; display: flex; align-items: center; gap: 7px; }
     .icon-btn { min-width: 34px; height: 34px; padding: 0 10px; color: var(--brand); }
     .icon-btn.starred { color: #9a7432; background: rgba(199,167,108,.16); }
+    .icon-btn.time-hidden { color: #9a7432; background: rgba(199,167,108,.16); }
+    body.hide-message-time .timestamp-clock { display: none; }
     .toggle { display: none; width: 36px; height: 36px; align-items: center; justify-content: center; }
     .toggle-lines { display: flex; flex-direction: column; gap: 4px; }
     .toggle-lines span { width: 17px; height: 2px; border-radius: 2px; background: var(--brand); }
@@ -127,6 +130,24 @@
     .bubble-footer { display: flex; gap: 7px; align-items: center; justify-content: flex-end; flex-wrap: wrap; margin-top: 10px; color: var(--muted); font-size: 12px; }
     .role.user .bubble-footer { justify-content: flex-end; }
     .model-info { color: var(--brand); }
+    .context-fold { margin-top: 10px; border-top: 1px solid var(--line); }
+    .context-fold > summary { display: flex; align-items: center; gap: 7px; min-height: 36px; color: var(--brand); cursor: pointer; font-size: 13px; font-weight: 700; list-style: none; }
+    .context-fold > summary::-webkit-details-marker { display: none; }
+    .context-fold > summary::before { content: ""; flex: 0 0 auto; width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 6px solid currentColor; transition: transform .16s ease; }
+    .context-fold[open] > summary::before { transform: rotate(90deg); }
+    .context-summary-meta { color: var(--muted); font-size: 12px; font-weight: 400; }
+    .context-fold-body { padding: 1px 0 8px 22px; }
+    .thinking-message { width: 100%; }
+    .thinking-fold { margin-top: 0; border-top: none; border-bottom: 1px solid var(--line); background: rgba(124,92,134,.035); }
+    .thinking-fold > summary { padding: 7px 2px; color: #66586a; }
+    .thinking-content { color: #514754; }
+    .citation-item { padding: 9px 0; }
+    .citation-item + .citation-item { border-top: 1px solid var(--line); }
+    .citation-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    .citation-kind { flex: 0 0 auto; color: var(--brand); font-size: 12px; font-weight: 700; }
+    .citation-title { color: var(--text); font-weight: 650; }
+    .citation-snippet { margin: 5px 0 0; color: #5d5360; white-space: pre-wrap; }
+    .citation-source { display: inline; border: none; padding: 0; background: transparent; color: var(--brand); cursor: pointer; font: inherit; text-decoration: underline; text-underline-offset: 2px; }
     .branch-switcher { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--line); border-radius: 999px; padding: 1px 4px; background: rgba(255,255,255,.55); }
     .branch-btn { border: none; background: transparent; color: var(--brand); width: 22px; height: 22px; border-radius: 50%; }
     .branch-btn:hover:not(:disabled) { background: var(--soft); }
@@ -172,6 +193,9 @@
       body { font-size: 14px; }
       .bubble { max-width: 88%; }
       .assistant .md, .bubble { padding: 10px; }
+      .context-fold > summary { align-items: flex-start; flex-wrap: wrap; }
+      .context-summary-meta { width: calc(100% - 26px); }
+      .context-fold-body { padding-left: 15px; }
       .header-stats { display: none; }
       .header-actions .label { display: none; }
     }
@@ -211,6 +235,7 @@
         <div class="brand" id="brandTitle">栖心记录馆</div>
         <div class="header-stats" id="windowStats"></div>
         <div class="header-actions">
+          <button class="icon-btn" id="timeToggleBtn" type="button" title="隐藏具体时间，仅保留日期" aria-pressed="false">◷</button>
           <button class="icon-btn" id="favoriteBtn" type="button" title="收藏当前窗口" style="display:none">☆</button>
           <button class="icon-btn" id="windowInfo" type="button" title="窗口详情" style="display:none">ⓘ</button>
         </div>
@@ -231,6 +256,7 @@ const $ = (selector) => document.querySelector(selector);
 
 (function () {
   const INDEX_KEY = "qixin-record-hall-index-v1";
+  const TIME_VISIBILITY_KEY = "qixin-record-hall-show-message-time-v1";
   const conversationPattern = /^conversations(?:-\d+)?\.json$/i;
 
   const convList = $("#convList");
@@ -248,6 +274,7 @@ const $ = (selector) => document.querySelector(selector);
   const pickFile = $("#pickFile");
   const modelFilters = $("#modelFilters");
   const windowCount = $("#windowCount");
+  const timeToggleBtn = $("#timeToggleBtn");
   const favoriteBtn = $("#favoriteBtn");
   const modal = $("#windowDetailModal");
   const modalContent = $("#modalContent");
@@ -260,6 +287,7 @@ const $ = (selector) => document.querySelector(selector);
   let branchSelections = new Map();
   let currentFilter = "all";
   let indexStore = loadIndexStore();
+  let showMessageTime = loadTimeVisibility();
 
   function setStatus(message) {
     if (loadStatus) loadStatus.textContent = message || "";
@@ -270,6 +298,29 @@ const $ = (selector) => document.querySelector(selector);
     sidebar.classList.toggle("open", open);
     if (backdrop) backdrop.classList.toggle("show", open);
     document.body.style.overflow = open ? "hidden" : "";
+  }
+
+  function loadTimeVisibility() {
+    try {
+      return localStorage.getItem(TIME_VISIBILITY_KEY) !== "0";
+    } catch (_error) {
+      return true;
+    }
+  }
+
+  function saveTimeVisibility() {
+    try {
+      localStorage.setItem(TIME_VISIBILITY_KEY, showMessageTime ? "1" : "0");
+    } catch (_error) {}
+  }
+
+  function applyTimeVisibility() {
+    document.body.classList.toggle("hide-message-time", !showMessageTime);
+    if (!timeToggleBtn) return;
+    timeToggleBtn.textContent = "◷";
+    timeToggleBtn.title = showMessageTime ? "隐藏具体时间，仅保留日期" : "显示具体时间";
+    timeToggleBtn.classList.toggle("time-hidden", !showMessageTime);
+    timeToggleBtn.setAttribute("aria-pressed", String(!showMessageTime));
   }
 
   function escapeHtml(value) {
@@ -436,13 +487,14 @@ const $ = (selector) => document.querySelector(selector);
         title: raw.title || raw.name || `未命名会话 ${index + 1}`,
         create_time: Number(raw.create_time || 0),
         update_time: Number(raw.update_time || raw.create_time || 0),
+        isArchived: raw.is_archived === true,
         raw,
         modelLabels: modelInfo.labels,
         modelSlugs: modelInfo.slugs,
       };
     });
 
-    conversations.sort((a, b) => (b.create_time || b.update_time || 0) - (a.create_time || a.update_time || 0));
+    conversations.sort(sortConversations);
     buildSearchIndex();
     renderModelFilters();
     renderConversationList();
@@ -453,6 +505,11 @@ const $ = (selector) => document.querySelector(selector);
       chat.innerHTML = '<div class="empty">没有找到可显示的聊天记录。</div>';
       updateHeaderActions();
     }
+  }
+
+  function sortConversations(a, b) {
+    if (a.isArchived !== b.isArchived) return a.isArchived ? 1 : -1;
+    return (b.create_time || b.update_time || 0) - (a.create_time || a.update_time || 0);
   }
 
   function analyzeConversationModels(raw) {
@@ -718,6 +775,31 @@ const $ = (selector) => document.querySelector(selector);
     return { parentId, siblings, index, total: siblings.length, convId };
   }
 
+  function extractContextCitations(metadata) {
+    const entries = Array.isArray(metadata?.conversation_context_citation_metadata)
+      ? metadata.conversation_context_citation_metadata
+      : [];
+    const seen = new Set();
+    return entries.map((entry) => {
+      const citation = entry?.citation || {};
+      const type = String(citation.conversation_context_type || "other");
+      return {
+        id: String(citation.citation_uuid || entry?.citation_uuid || ""),
+        type,
+        title: String(citation.conversation_title || citation.title || citation.reason || ""),
+        snippet: String(citation.snippet || citation.matched_text || ""),
+        memoryId: String(citation.memory_id || ""),
+        url: String(citation.url || ""),
+      };
+    }).filter((citation) => {
+      if (!citation.title && !citation.snippet) return false;
+      const key = [citation.type, citation.title, citation.snippet, citation.memoryId, citation.url].join("\u0001");
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
   function extractMessageFromNode(node, nodeId) {
     const message = node?.message;
     if (!message || !message.author) return null;
@@ -766,10 +848,13 @@ const $ = (selector) => document.querySelector(selector);
       messageId: message.id || nodeId,
       role,
       sourceRole,
+      contentType: String(content.content_type || ""),
+      isThinking: content.content_type === "thoughts",
       text,
       time: Number(message.create_time || 0),
       model: metadata.model_slug || metadata.default_model_slug || "",
       images: Array.from(new Set(imageTokens)),
+      contextCitations: extractContextCitations(metadata),
     };
   }
 
@@ -859,24 +944,99 @@ const $ = (selector) => document.querySelector(selector);
     }
   }
 
-  function renderMessage(message, index, conv) {
-    const article = document.createElement("article");
-    article.className = `msg ${message.role}`;
-    article.id = `msg-${message.nodeId || message.messageId || index}`;
-    const roleWrap = document.createElement("div");
-    roleWrap.className = `role ${message.role}`;
-    const bubble = document.createElement("div");
-    bubble.className = message.role === "user" ? "bubble" : message.role === "system" ? "system-note" : "assistant";
-    const md = document.createElement("div");
-    md.className = "md";
-    md.innerHTML = renderMarkdown(message.text || "");
-    renderImages(message.images || [], md, message.role);
+  function citationTypeLabel(type) {
+    return ({
+      user_memory: "记忆库",
+      general_memory: "用户画像",
+      past_conversation: "Past chat",
+      user_instructions: "自定义指令",
+    })[type] || "其他上下文";
+  }
 
+  function citationConversationId(url) {
+    return String(url || "").match(/(?:^|\/)c\/([^/?#]+)/)?.[1] || "";
+  }
+
+  function createContextCitationFold(citations) {
+    if (!Array.isArray(citations) || !citations.length) return null;
+    const details = document.createElement("details");
+    details.className = "context-fold citation-fold";
+    const summary = document.createElement("summary");
+    const label = document.createElement("span");
+    label.textContent = `引用上下文（${citations.length}）`;
+    const counts = new Map();
+    citations.forEach((citation) => counts.set(citation.type, (counts.get(citation.type) || 0) + 1));
+    const meta = document.createElement("span");
+    meta.className = "context-summary-meta";
+    meta.textContent = Array.from(counts.entries()).map(([type, count]) => `${citationTypeLabel(type)} ${count}`).join(" · ");
+    summary.append(label, meta);
+
+    const body = document.createElement("div");
+    body.className = "context-fold-body citation-list";
+    citations.forEach((citation) => {
+      const item = document.createElement("section");
+      item.className = "citation-item";
+      const head = document.createElement("div");
+      head.className = "citation-head";
+      const kind = document.createElement("span");
+      kind.className = "citation-kind";
+      kind.textContent = citationTypeLabel(citation.type);
+      head.appendChild(kind);
+      if (citation.title) {
+        const title = document.createElement("span");
+        title.className = "citation-title";
+        title.textContent = citation.title;
+        head.appendChild(title);
+      }
+      item.appendChild(head);
+      if (citation.snippet && citation.snippet !== citation.title) {
+        const snippet = document.createElement("div");
+        snippet.className = "citation-snippet";
+        snippet.textContent = citation.snippet;
+        item.appendChild(snippet);
+      }
+      if (citation.type === "past_conversation") {
+        const sourceId = citationConversationId(citation.url);
+        const sourceConversation = conversations.find((item) => item.id === sourceId);
+        if (sourceConversation) {
+          const open = document.createElement("button");
+          open.type = "button";
+          open.className = "citation-source";
+          open.textContent = "在记录馆中打开";
+          open.addEventListener("click", () => renderConversation(sourceConversation.internalId, { closeSidebar: true, resetScroll: true }));
+          item.appendChild(open);
+        } else if (/^(?:https?:\/\/|\/c\/)/i.test(citation.url)) {
+          const open = document.createElement("a");
+          open.className = "citation-source";
+          open.href = citation.url.startsWith("/c/") ? `https://chatgpt.com${citation.url}` : citation.url;
+          open.target = "_blank";
+          open.rel = "noopener noreferrer";
+          open.textContent = "打开原窗口";
+          item.appendChild(open);
+        }
+      }
+      body.appendChild(item);
+    });
+    details.append(summary, body);
+    return details;
+  }
+
+  function createMessageFooter(message, conv) {
     const footer = document.createElement("div");
     footer.className = "bubble-footer";
     const timestamp = document.createElement("div");
     timestamp.className = "timestamp";
-    timestamp.textContent = message.time ? formatTime(message.time, true) : "时间未知";
+    if (message.time) {
+      const datePart = document.createElement("span");
+      datePart.className = "timestamp-date";
+      datePart.textContent = formatTime(message.time);
+      const clockPart = document.createElement("span");
+      clockPart.className = "timestamp-clock";
+      clockPart.textContent = ` ${formatTime(message.time, true).slice(11)}`;
+      timestamp.append(datePart, clockPart);
+    } else {
+      timestamp.textContent = "时间未知";
+    }
     footer.appendChild(timestamp);
     if (message.role === "system") {
       const source = document.createElement("div");
@@ -892,8 +1052,38 @@ const $ = (selector) => document.querySelector(selector);
     }
     const branchSwitcher = createBranchSwitcher(message, conv);
     if (branchSwitcher) footer.appendChild(branchSwitcher);
-    md.appendChild(footer);
-    bubble.appendChild(md);
+    return footer;
+  }
+
+  function renderMessage(message, index, conv) {
+    const article = document.createElement("article");
+    article.className = `msg ${message.role}`;
+    article.id = `msg-${message.nodeId || message.messageId || index}`;
+    const roleWrap = document.createElement("div");
+    roleWrap.className = `role ${message.role}`;
+    const bubble = document.createElement("div");
+    bubble.className = message.isThinking ? "thinking-message" : message.role === "user" ? "bubble" : message.role === "system" ? "system-note" : "assistant";
+    const md = document.createElement("div");
+    md.className = "md";
+    md.innerHTML = renderMarkdown(message.text || "");
+    renderImages(message.images || [], md, message.role);
+    const footer = createMessageFooter(message, conv);
+
+    if (message.isThinking) {
+      const details = document.createElement("details");
+      details.className = "context-fold thinking-fold";
+      const summary = document.createElement("summary");
+      summary.textContent = "思考过程";
+      md.className = "context-fold-body thinking-content md";
+      md.appendChild(footer);
+      details.append(summary, md);
+      bubble.appendChild(details);
+    } else {
+      const citations = createContextCitationFold(message.contextCitations);
+      if (citations) md.appendChild(citations);
+      md.appendChild(footer);
+      bubble.appendChild(md);
+    }
     roleWrap.appendChild(bubble);
     article.appendChild(roleWrap);
     chat.appendChild(article);
@@ -1047,7 +1237,7 @@ const $ = (selector) => document.querySelector(selector);
     modalContent.innerHTML = `
       <div class="form-row"><label>标题</label><div class="text-box">${escapeHtml(conv.title)}</div></div>
       <div class="form-row"><label>conversation_id</label><div class="text-box">${escapeHtml(conv.id)}</div></div>
-      <div class="form-row"><label>模型</label><div class="badges">${conv.modelLabels.map((label) => `<span class="badge">${escapeHtml(label)}</span>`).join("")}</div></div>
+      <div class="form-row"><label>模型筛选</label><div class="badges">${conv.modelLabels.map((label) => `<span class="badge">${escapeHtml(label)}</span>`).join("")}</div></div>
       <div class="form-row"><label>原始模型</label><div class="text-box">${escapeHtml(formatModelDetails(conv.raw))}</div></div>
       <div class="form-row"><label>字符统计</label><div class="text-box">${escapeHtml(formatStatsLine("当前分支", currentStats))}<br>${escapeHtml(formatStatsLine("全部分支", allStats))}</div></div>
       <div class="form-row"><label>标签：用中文逗号或逗号分隔</label><input id="detailTags" value="${escapeHtml(meta.tags.join("，"))}" placeholder="例如：4o言栖，模型机制，情感锚点"></div>
@@ -1120,7 +1310,13 @@ const $ = (selector) => document.querySelector(selector);
     });
   }
 
+  applyTimeVisibility();
   $("#toggleBtn")?.addEventListener("click", () => toggleSidebar(!sidebar.classList.contains("open")));
+  timeToggleBtn?.addEventListener("click", () => {
+    showMessageTime = !showMessageTime;
+    saveTimeVisibility();
+    applyTimeVisibility();
+  });
   backdrop?.addEventListener("click", () => toggleSidebar(false));
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
