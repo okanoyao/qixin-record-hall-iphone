@@ -99,7 +99,20 @@
     #brandTitle{font-size:15px}
     .header-stats { flex: 0 1 auto; max-width: 34vw; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .header-actions { margin-left: auto; display: flex; align-items: center; gap: 7px; }
-    .icon-btn { min-width: 34px; height: 34px; padding: 0 10px; color: var(--brand); }
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      min-width: 34px;
+      height: 34px;
+      padding: 0;
+      color: var(--brand);
+      font-family: "Segoe UI Symbol", "Apple Symbols", "Noto Sans Symbols 2", sans-serif;
+      font-size: 18px;
+      line-height: 1;
+      vertical-align: middle;
+    }
     .icon-btn.starred { color: #9a7432; background: rgba(199,167,108,.16); }
     .icon-btn.time-hidden { color: #9a7432; background: rgba(199,167,108,.16); }
     body.hide-message-time .timestamp-clock { display: none; }
@@ -187,7 +200,7 @@
       .bubble { max-width: 82%; }
       .brand { font-size: 14px; }
       .header-stats { max-width: 28vw; }
-      .icon-btn { min-width: 32px; padding: 0 8px; }
+      .icon-btn { width: 32px; min-width: 32px; height: 32px; padding: 0; }
     }
     @media (max-width: 520px) {
       body { font-size: 14px; }
@@ -564,12 +577,14 @@ const $ = (selector) => document.querySelector(selector);
     if (!value) return "其他";
     if (value.includes("gpt-4o") || /(^|[-_])4o($|[-_])/.test(value)) return "4o";
     if (value.includes("gpt-4-1") || value.includes("gpt-4.1") || value.includes("4-1")) return "4.1";
-    if (value.includes("gpt-5-5") || value.includes("5.5") || value.includes("5-5")) return value.includes("thinking") ? "5.5T" : "5.5";
-    if (value.includes("gpt-5-4") || value.includes("5.4") || value.includes("5-4")) return value.includes("thinking") ? "5.4T" : "5.4";
-    if (value.includes("gpt-5-3") || value.includes("5.3") || value.includes("5-3")) return value.includes("thinking") ? "5.3T" : "5.3";
-    if (value.includes("gpt-5-2") || value.includes("5.2") || value.includes("5-2")) return value.includes("thinking") ? "5.2T" : "5.2";
-    if (value.includes("gpt-5-1") || value.includes("5.1") || value.includes("5-1")) return value.includes("thinking") ? "5.1T" : "5.1";
-    if (value.includes("gpt-5")) return value.includes("thinking") ? "5T" : "5";
+    if (value.includes("gpt-5.6-sol-wm") || value.includes("gpt-5-6-sol-wm")) return "5.6Sol";
+    if (value.includes("gpt-5-6-thinking") || value.includes("gpt-5.6-thinking")) return "5.6T";
+    if (value.includes("gpt-5-5") || value.includes("5.5") || value.includes("5-5")) return value.includes("thinking") ? "5.5T" : "5.5i";
+    if (value.includes("gpt-5-4") || value.includes("5.4") || value.includes("5-4")) return "5.4T";
+    if (value.includes("gpt-5-3") || value.includes("5.3") || value.includes("5-3")) return "5.3i";
+    if (value.includes("gpt-5-2") || value.includes("5.2") || value.includes("5-2")) return value.includes("thinking") ? "5.2T" : "5.2i";
+    if (value.includes("gpt-5-1") || value.includes("5.1") || value.includes("5-1")) return value.includes("thinking") ? "5.1T" : "5.1i";
+    if (value.includes("gpt-5")) return value.includes("thinking") ? "5T" : "5i";
     if (value.includes("o3")) return "o3";
     if (value.includes("o4")) return "o4";
     if (value.includes("o1")) return "o1";
@@ -580,7 +595,7 @@ const $ = (selector) => document.querySelector(selector);
   }
 
   function sortModelLabels(a, b) {
-    const order = ["4o", "4.1", "5", "5T", "5.1", "5.1T", "5.2", "5.2T", "5.3", "5.3T", "5.4", "5.4T", "5.5", "5.5T", "o1", "o3", "o4", "Claude", "Gemini", "GLM", "其他"];
+    const order = ["4o", "4.1", "o3", "o4", "5i", "5T", "5.1i", "5.1T", "5.2i", "5.2T", "5.3i", "5.4T", "5.5i", "5.5T", "5.6T", "5.6Sol", "o1", "Claude", "Gemini", "GLM", "其他"];
     return (order.indexOf(a) === -1 ? 999 : order.indexOf(a)) - (order.indexOf(b) === -1 ? 999 : order.indexOf(b)) || a.localeCompare(b);
   }
 
