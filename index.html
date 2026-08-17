@@ -578,7 +578,9 @@ const $ = (selector) => document.querySelector(selector);
     if (value.includes("gpt-4o") || /(^|[-_])4o($|[-_])/.test(value)) return "4o";
     if (value.includes("gpt-4-1") || value.includes("gpt-4.1") || value.includes("4-1")) return "4.1";
     if (value.includes("gpt-5.6-sol-wm") || value.includes("gpt-5-6-sol-wm")) return "5.6Sol";
+    if (value.includes("gpt-5-6-instant") || value.includes("gpt-5.6-instant")) return "5.6i";
     if (value.includes("gpt-5-6-thinking") || value.includes("gpt-5.6-thinking")) return "5.6T";
+    if (value.includes("gpt-5.5-wm") || value.includes("gpt-5-5-wm")) return "5.5T";
     if (value.includes("gpt-5-5") || value.includes("5.5") || value.includes("5-5")) return value.includes("thinking") ? "5.5T" : "5.5i";
     if (value.includes("gpt-5-4") || value.includes("5.4") || value.includes("5-4")) return "5.4T";
     if (value.includes("gpt-5-3") || value.includes("5.3") || value.includes("5-3")) return "5.3i";
@@ -595,7 +597,7 @@ const $ = (selector) => document.querySelector(selector);
   }
 
   function sortModelLabels(a, b) {
-    const order = ["4o", "4.1", "o3", "o4", "5i", "5T", "5.1i", "5.1T", "5.2i", "5.2T", "5.3i", "5.4T", "5.5i", "5.5T", "5.6T", "5.6Sol", "o1", "Claude", "Gemini", "GLM", "其他"];
+    const order = ["4o", "4.1", "o3", "o4", "5i", "5T", "5.1i", "5.1T", "5.2i", "5.2T", "5.3i", "5.4T", "5.5i", "5.5T", "5.6i", "5.6T", "5.6Sol", "o1", "Claude", "Gemini", "GLM", "其他"];
     return (order.indexOf(a) === -1 ? 999 : order.indexOf(a)) - (order.indexOf(b) === -1 ? 999 : order.indexOf(b)) || a.localeCompare(b);
   }
 
