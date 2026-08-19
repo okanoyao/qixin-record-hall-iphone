@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>栖心记录馆 iPhone版</title>
+  <title>栖心记录馆 iPhone Full</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%237c5c86'/%3E%3Ccircle cx='47' cy='17' r='9' fill='%23c7a76c' opacity='.9'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-size='34' font-family='serif' font-weight='700' fill='%23fffdf9'%3E%E6%A0%96%3C/text%3E%3C/svg%3E">
   <!--
     栖心记录馆 · private modified version for personal use.
@@ -87,6 +87,7 @@
     .badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
     .badge { border-radius: 999px; padding: 2px 7px; font-size: 11px; background: rgba(124,92,134,.09); color: var(--brand); }
     .badge.tag { background: rgba(199,167,108,.13); color: #8a6d32; }
+    .badge.source { background: rgba(79,121,112,.11); color: #49756c; }
     .results { display: none; margin-top: 8px; }
     .results.show { display: block; }
     .result { padding: 11px; margin: 8px 0; border-radius: 13px; background: #fff; border: 1px solid var(--line); cursor: pointer; }
@@ -161,6 +162,23 @@
     .citation-title { color: var(--text); font-weight: 650; }
     .citation-snippet { margin: 5px 0 0; color: #5d5360; white-space: pre-wrap; }
     .citation-source { display: inline; border: none; padding: 0; background: transparent; color: var(--brand); cursor: pointer; font: inherit; text-decoration: underline; text-underline-offset: 2px; }
+    .tool-group { margin: 10px 0; }
+    .role.tool { justify-content: center; }
+    .tool-panel { width: min(100%, 860px); border: 1px solid rgba(79,121,112,.18); border-radius: 13px; background: rgba(79,121,112,.045); }
+    .tool-fold { margin: 0; border: none; }
+    .tool-fold > summary { min-height: 40px; padding: 0 12px; color: #49756c; }
+    .tool-list { padding: 0 12px 10px; }
+    .tool-entry { padding: 10px 0; }
+    .tool-entry + .tool-entry { border-top: 1px solid var(--line); }
+    .tool-entry-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+    .tool-entry-title { color: #3f665f; font-weight: 700; }
+    .tool-entry-meta { color: var(--muted); font-size: 12px; }
+    .tool-entry .md { color: #4f5351; }
+    .tool-entry pre { max-height: 520px; overflow: auto; white-space: pre; background: rgba(57,42,62,.91); color: #fffaf7; border-radius: 10px; padding: 11px; }
+    .tool-entry pre code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .raw-fold { margin-top: 7px; border-top: 1px dashed var(--line); }
+    .raw-fold > summary { min-height: 31px; color: var(--muted); font-size: 12px; font-weight: 600; }
+    .raw-json { max-height: 420px; margin: 0 0 4px; font-size: 11px; white-space: pre; }
     .branch-switcher { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--line); border-radius: 999px; padding: 1px 4px; background: rgba(255,255,255,.55); }
     .branch-btn { border: none; background: transparent; color: var(--brand); width: 22px; height: 22px; border-radius: 50%; }
     .branch-btn:hover:not(:disabled) { background: var(--soft); }
@@ -193,7 +211,7 @@
     .image-modal-close { position: absolute; top: -42px; right: 0; border: none; border-radius: 50%; width: 33px; height: 33px; background: rgba(255,255,255,.92); font-size: 20px; }
     @media (max-width: 900px) {
       .app { grid-template-columns: 1fr; }
-      .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 82vw; max-width: 360px; transform: translateX(-105%); transition: transform .24s ease; z-index: 20; box-shadow: 10px 0 28px rgba(0,0,0,.13); }
+      .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 86vw; max-width: 360px; transform: translateX(-105%); transition: transform .24s ease; z-index: 20; box-shadow: 10px 0 28px rgba(0,0,0,.13); padding-bottom: env(safe-area-inset-bottom); }
       .sidebar.open { transform: translateX(0); }
       .toggle { display: inline-flex; }
       .chat { padding: 12px; }
@@ -201,6 +219,8 @@
       .brand { font-size: 14px; }
       .header-stats { max-width: 28vw; }
       .icon-btn { width: 32px; min-width: 32px; height: 32px; padding: 0; }
+      .tool-panel { width: 100%; }
+      .tool-entry pre, .raw-json { max-width: 100%; -webkit-overflow-scrolling: touch; }
     }
     @media (max-width: 520px) {
       body { font-size: 14px; }
@@ -219,9 +239,10 @@
     <aside class="sidebar" id="sidebar">
       <div class="side-inner">
         <div class="picker">
-          <div class="picker-title"><strong>栖心记录馆</strong><span>iPhone版</span></div>
-          <label class="btn"><input id="pickFile" type="file" accept=".json,application/json,text/json" multiple>🧾 导入 JSON 文件</label>
-          <div id="loadStatus" class="status">请选择一个或多个 JSON 文件</div>
+          <div class="picker-title"><strong>栖心记录馆</strong><span>iPhone Full</span></div>
+          <label class="btn"><input id="pickFile" type="file" accept="application/json,text/json,.json" multiple>🧾 导入聊天记录</label>
+          <label class="btn"><input id="pickResponse" type="file" accept="application/json,text/plain,.json,.txt" multiple>🧩 导入浏览器响应</label>
+          <div id="loadStatus" class="status">请选择聊天记录或浏览器响应文件</div>
         </div>
 
         <div class="filter-card">
@@ -253,7 +274,7 @@
           <button class="icon-btn" id="windowInfo" type="button" title="窗口详情" style="display:none">ⓘ</button>
         </div>
       </header>
-      <div class="chat-container"><section id="chat" class="chat"><div class="empty">请点左上角菜单，导入 conversations*.json 文件</div></section></div>
+      <div class="chat-container"><section id="chat" class="chat"><div class="empty">请选择聊天记录或浏览器响应文件</div></section></div>
     </main>
   </div>
 
@@ -271,6 +292,7 @@ const $ = (selector) => document.querySelector(selector);
   const INDEX_KEY = "qixin-record-hall-index-v1";
   const TIME_VISIBILITY_KEY = "qixin-record-hall-show-message-time-v1";
   const conversationPattern = /^conversations(?:-\d+)?\.json$/i;
+  const responsePattern = /\.(?:json|txt)$/i;
 
   const convList = $("#convList");
   const chat = $("#chat");
@@ -285,6 +307,7 @@ const $ = (selector) => document.querySelector(selector);
   const brandTitle = $("#brandTitle");
   const loadStatus = $("#loadStatus");
   const pickFile = $("#pickFile");
+  const pickResponse = $("#pickResponse");
   const modelFilters = $("#modelFilters");
   const windowCount = $("#windowCount");
   const timeToggleBtn = $("#timeToggleBtn");
@@ -297,6 +320,8 @@ const $ = (selector) => document.querySelector(selector);
   let allMessages = [];
   let currentConvId = null;
   let importedFiles = [];
+  let exportConversationSources = new Map();
+  let responseConversationSources = new Map();
   let branchSelections = new Map();
   let currentFilter = "all";
   let indexStore = loadIndexStore();
@@ -362,16 +387,21 @@ const $ = (selector) => document.querySelector(selector);
 
   function summarizeMessages(messages) {
     const list = Array.isArray(messages) ? messages : [];
+    const chatMessages = list.filter((message) => !message.isToolProcess);
+    const toolMessages = list.filter((message) => message.isToolProcess);
     return {
-      messageCount: list.length,
-      charCount: list.reduce((sum, message) => sum + countTextChars(message.text), 0),
+      messageCount: chatMessages.length,
+      charCount: chatMessages.reduce((sum, message) => sum + countTextChars(message.text), 0),
       imageCount: list.reduce((sum, message) => sum + (Array.isArray(message.images) ? message.images.length : 0), 0),
+      toolCount: toolMessages.length,
+      toolCharCount: toolMessages.reduce((sum, message) => sum + countTextChars(message.text), 0),
     };
   }
 
   function formatStatsLine(label, stats) {
     const parts = [`${label}：${formatNumber(stats.charCount)} 字`, `${formatNumber(stats.messageCount)} 条消息`];
     if (stats.imageCount) parts.push(`${formatNumber(stats.imageCount)} 张图片`);
+    if (stats.toolCount) parts.push(`工具 ${formatNumber(stats.toolCount)} 条 / ${formatNumber(stats.toolCharCount)} 字`);
     return parts.join(" · ");
   }
 
@@ -389,7 +419,7 @@ const $ = (selector) => document.querySelector(selector);
     try {
       localStorage.setItem(INDEX_KEY, JSON.stringify(indexStore, null, 2));
     } catch (error) {
-      alert(`窗口资料保存失败：${error.message}`);
+      alert(`索引保存失败：${error.message}`);
     }
   }
 
@@ -424,13 +454,12 @@ const $ = (selector) => document.querySelector(selector);
 
   function sortConversationFiles(files) {
     return Array.from(files || [])
-      .filter((file) => /\.json$/i.test(file.name) || /json/i.test(file.type || ""))
-      .sort((a, b) => {
-        const rankA = conversationPattern.test(a.name) ? 0 : 1;
-        const rankB = conversationPattern.test(b.name) ? 0 : 1;
-        if (rankA !== rankB) return rankA - rankB;
-        return a.name.localeCompare(b.name, undefined, { numeric: true });
-      });
+      .filter((file) => conversationPattern.test(file.name))
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+  }
+
+  function conversationId(raw, fallback = "") {
+    return String(raw?.conversation_id || raw?.id || fallback || "");
   }
 
   function normaliseConversationData(data) {
@@ -442,13 +471,166 @@ const $ = (selector) => document.querySelector(selector);
     return [];
   }
 
+  function parseJsonPayload(text) {
+    const raw = String(text || "").replace(/^\uFEFF/, "").trim();
+    if (!raw) throw new Error("文件是空的");
+    try {
+      return JSON.parse(raw);
+    } catch (directError) {
+      const starts = [raw.indexOf("{"), raw.indexOf("[")].filter((index) => index >= 0).sort((a, b) => a - b);
+      for (const start of starts) {
+        try {
+          return JSON.parse(raw.slice(start));
+        } catch (_error) {
+          // Try the next possible JSON opening after a copied response preamble.
+        }
+      }
+      throw directError;
+    }
+  }
+
+  function contentHasDisplayValue(content) {
+    if (!content || typeof content !== "object") return false;
+    if (typeof content.text === "string" && content.text.trim()) return true;
+    if (typeof content.result === "string" && content.result.trim()) return true;
+    if (typeof content.content === "string" && content.content.trim()) return true;
+    if (Array.isArray(content.thoughts) && content.thoughts.some((item) => item?.summary || item?.content)) return true;
+    return Array.isArray(content.parts) && content.parts.some((part) => {
+      if (typeof part === "string") return !!part.trim();
+      return !!(part && typeof part === "object" && (part.text || part.asset_pointer || part.image_url || part.content));
+    });
+  }
+
+  function mergeMessages(exportMessage, responseMessage) {
+    if (!exportMessage) return responseMessage;
+    if (!responseMessage) return exportMessage;
+    const responseContent = responseMessage.content || {};
+    const exportContent = exportMessage.content || {};
+    const content = contentHasDisplayValue(responseContent) || !contentHasDisplayValue(exportContent)
+      ? responseContent
+      : exportContent;
+    return {
+      ...exportMessage,
+      ...responseMessage,
+      author: {
+        ...(exportMessage.author || {}),
+        ...(responseMessage.author || {}),
+        metadata: {
+          ...(exportMessage.author?.metadata || {}),
+          ...(responseMessage.author?.metadata || {}),
+        },
+      },
+      content,
+      metadata: {
+        ...(exportMessage.metadata || {}),
+        ...(responseMessage.metadata || {}),
+      },
+    };
+  }
+
+  function mergeConversationRaws(exportRaw, responseRaw) {
+    const exportMapping = exportRaw?.mapping || {};
+    const responseMapping = responseRaw?.mapping || {};
+    const mapping = {};
+    const nodeIds = new Set([...Object.keys(exportMapping), ...Object.keys(responseMapping)]);
+    nodeIds.forEach((nodeId) => {
+      const exportNode = exportMapping[nodeId];
+      const responseNode = responseMapping[nodeId];
+      if (!exportNode) {
+        mapping[nodeId] = responseNode;
+        return;
+      }
+      if (!responseNode) {
+        mapping[nodeId] = exportNode;
+        return;
+      }
+      mapping[nodeId] = {
+        ...exportNode,
+        ...responseNode,
+        id: responseNode.id || exportNode.id || nodeId,
+        parent: responseNode.parent ?? exportNode.parent ?? null,
+        children: Array.from(new Set([...(exportNode.children || []), ...(responseNode.children || [])])),
+        message: mergeMessages(exportNode.message, responseNode.message),
+      };
+    });
+
+    const derivedChildren = new Map();
+    Object.entries(mapping).forEach(([childId, node]) => {
+      const parentId = node?.parent;
+      if (!parentId || !mapping[parentId]) return;
+      if (!derivedChildren.has(parentId)) derivedChildren.set(parentId, []);
+      derivedChildren.get(parentId).push(childId);
+    });
+    Object.entries(mapping).forEach(([nodeId, node]) => {
+      const children = new Set(derivedChildren.get(nodeId) || []);
+      (node?.children || []).forEach((childId) => {
+        const childParent = mapping[childId]?.parent;
+        if (childParent == null || childParent === nodeId) children.add(childId);
+      });
+      mapping[nodeId] = { ...node, children: Array.from(children) };
+    });
+
+    const id = conversationId(responseRaw, conversationId(exportRaw));
+    return {
+      ...exportRaw,
+      ...responseRaw,
+      id: exportRaw?.id || id,
+      conversation_id: responseRaw?.conversation_id || id,
+      mapping,
+      current_node: responseRaw?.current_node || exportRaw?.current_node || null,
+      __qixin_sources: ["export", "response"],
+    };
+  }
+
+  function sourceWrappedRaw(entry, source) {
+    return {
+      ...entry.raw,
+      __qixin_sources: [source],
+      __qixin_source_files: [entry.fileName],
+    };
+  }
+
+  function refreshConversationsFromSources(statusMessage) {
+    const ids = Array.from(new Set([...exportConversationSources.keys(), ...responseConversationSources.keys()]));
+    const raws = ids.map((id) => {
+      const exportEntry = exportConversationSources.get(id);
+      const responseEntry = responseConversationSources.get(id);
+      if (exportEntry && responseEntry) {
+        return {
+          ...mergeConversationRaws(exportEntry.raw, responseEntry.raw),
+          __qixin_source_files: [exportEntry.fileName, responseEntry.fileName],
+        };
+      }
+      if (responseEntry) return sourceWrappedRaw(responseEntry, "response");
+      return sourceWrappedRaw(exportEntry, "export");
+    });
+    ingestConversations(raws);
+    if (statusMessage) setStatus(statusMessage);
+  }
+
+  function mergeImportedFiles(files, replace = false) {
+    const incoming = Array.from(files || []);
+    if (replace) {
+      importedFiles = incoming;
+      return;
+    }
+    const seen = new Set(importedFiles.map((file) => `${file.webkitRelativePath || file.name}\u0001${file.size}\u0001${file.lastModified}`));
+    incoming.forEach((file) => {
+      const key = `${file.webkitRelativePath || file.name}\u0001${file.size}\u0001${file.lastModified}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        importedFiles.push(file);
+      }
+    });
+  }
+
   async function loadConversationFiles(fileList) {
     const files = Array.from(fileList || []);
-    importedFiles = files;
+    mergeImportedFiles(files, true);
     const conversationFiles = sortConversationFiles(files);
 
     if (!conversationFiles.length) {
-      const msg = "没有找到可读取的 JSON 文件";
+      const msg = "没有找到 conversations.json 或 conversations-000.json 这类文件";
       setStatus(msg);
       alert(msg);
       return;
@@ -458,8 +640,8 @@ const $ = (selector) => document.querySelector(selector);
     const merged = [];
     for (const file of conversationFiles) {
       try {
-        const parsed = JSON.parse(await file.text());
-        merged.push(...normaliseConversationData(parsed));
+        const parsed = parseJsonPayload(await file.text());
+        merged.push(...normaliseConversationData(parsed).map((raw) => ({ raw, fileName: file.name })));
       } catch (error) {
         const msg = `${file.name} JSON 解析失败：${error.message}`;
         setStatus(msg);
@@ -475,18 +657,53 @@ const $ = (selector) => document.querySelector(selector);
       return;
     }
 
-    const deduped = [];
-    const seen = new Set();
-    merged.forEach((raw, index) => {
-      const id = raw?.conversation_id || raw?.id || `raw-${index}`;
-      if (seen.has(id)) return;
-      seen.add(id);
-      deduped.push(raw);
+    const nextSources = new Map();
+    merged.forEach((entry, index) => {
+      const raw = entry.raw;
+      const id = conversationId(raw, `raw-${index}`);
+      const current = nextSources.get(id);
+      if (!current || Number(raw?.update_time || 0) >= Number(current.raw?.update_time || 0)) {
+        nextSources.set(id, { raw, fileName: entry.fileName || "conversations*.json" });
+      }
     });
+    exportConversationSources = nextSources;
+    const mergedCount = Array.from(exportConversationSources.keys()).filter((id) => responseConversationSources.has(id)).length;
+    refreshConversationsFromSources(`已读取 ${exportConversationSources.size} 个导出窗口${mergedCount ? ` · 合并 ${mergedCount} 个浏览器响应` : ""}`);
+  }
 
-    setStatus(`已读取 ${deduped.length} 个窗口，正在整理窗口…`);
-    ingestConversations(deduped);
-    setStatus(`已读取 ${deduped.length} 个窗口 · 当前筛选：全部`);
+  async function loadResponseFiles(fileList) {
+    const files = Array.from(fileList || []).filter((file) => responsePattern.test(file.name));
+    if (!files.length) {
+      const msg = "没有找到 .txt 或 .json 浏览器响应文件";
+      setStatus(msg);
+      alert(msg);
+      return;
+    }
+    mergeImportedFiles(files, false);
+    setStatus(`找到 ${files.length} 个浏览器响应，正在读取…`);
+    let importedCount = 0;
+    for (const file of files) {
+      try {
+        const parsed = parseJsonPayload(await file.text());
+        const raws = normaliseConversationData(parsed).filter((raw) => raw && typeof raw.mapping === "object");
+        if (!raws.length) throw new Error("没有找到带 mapping 的聊天窗口");
+        raws.forEach((raw, index) => {
+          const id = conversationId(raw, `response-${file.name}-${index}`);
+          const current = responseConversationSources.get(id);
+          if (!current || Number(raw?.update_time || 0) >= Number(current.raw?.update_time || 0)) {
+            responseConversationSources.set(id, { raw, fileName: file.name });
+          }
+          importedCount += 1;
+        });
+      } catch (error) {
+        const msg = `${file.name} 响应解析失败：${error.message}`;
+        setStatus(msg);
+        alert(msg);
+        return;
+      }
+    }
+    const mergedCount = Array.from(responseConversationSources.keys()).filter((id) => exportConversationSources.has(id)).length;
+    refreshConversationsFromSources(`已读取 ${importedCount} 个浏览器响应${mergedCount ? ` · 与导出数据合并 ${mergedCount} 个窗口` : ""}`);
   }
 
   function ingestConversations(rawConversations) {
@@ -502,6 +719,8 @@ const $ = (selector) => document.querySelector(selector);
         update_time: Number(raw.update_time || raw.create_time || 0),
         isArchived: raw.is_archived === true,
         raw,
+        sources: Array.isArray(raw.__qixin_sources) ? raw.__qixin_sources : ["export"],
+        sourceFiles: Array.isArray(raw.__qixin_source_files) ? raw.__qixin_source_files.filter(Boolean) : [],
         modelLabels: modelInfo.labels,
         modelSlugs: modelInfo.slugs,
       };
@@ -532,6 +751,8 @@ const $ = (selector) => document.querySelector(selector);
       const metadata = node?.message?.metadata || {};
       if (metadata.model_slug) slugs.add(String(metadata.model_slug));
       if (metadata.default_model_slug) slugs.add(String(metadata.default_model_slug));
+      if (metadata.resolved_model_slug) slugs.add(String(metadata.resolved_model_slug));
+      if (metadata.requested_model_slug) slugs.add(String(metadata.requested_model_slug));
       if (node?.message?.author?.metadata?.model_slug) slugs.add(String(node.message.author.metadata.model_slug));
     });
     const labels = new Set();
@@ -550,6 +771,8 @@ const $ = (selector) => document.querySelector(selector);
       const slugs = [
         metadata.model_slug,
         metadata.default_model_slug,
+        metadata.resolved_model_slug,
+        metadata.requested_model_slug,
         message.author?.metadata?.model_slug,
       ].filter(Boolean).map(String);
       Array.from(new Set(slugs)).forEach((slug) => counts.set(slug, (counts.get(slug) || 0) + 1));
@@ -570,6 +793,13 @@ const $ = (selector) => document.querySelector(selector);
     const topSlug = raw?.default_model_slug ? String(raw.default_model_slug) : "";
     if (topSlug) lines.push(`窗口默认：${topSlug}`);
     return lines.join("\n");
+  }
+
+  function sourceLabel(sources) {
+    const set = new Set(Array.isArray(sources) ? sources : []);
+    if (set.has("export") && set.has("response")) return "导出 + 响应";
+    if (set.has("response")) return "浏览器响应";
+    return "导出数据";
   }
 
   function classifyModel(slug) {
@@ -651,10 +881,11 @@ const $ = (selector) => document.querySelector(selector);
       item.dataset.id = conv.internalId;
       const modelBadges = conv.modelLabels.map((label) => `<span class="badge">${escapeHtml(label)}</span>`).join("");
       const tagBadges = meta.tags.slice(0, 4).map((tag) => `<span class="badge tag">#${escapeHtml(tag)}</span>`).join("");
+      const sourceBadge = `<span class="badge source">${escapeHtml(sourceLabel(conv.sources))}</span>`;
       item.innerHTML = `
         <div class="conv-title">${meta.favorite ? '<span class="star-mark">★</span>' : ''}<span>${escapeHtml(conv.title)}</span></div>
         <div class="time">${formatTime(conv.create_time || conv.update_time)}</div>
-        <div class="badges">${modelBadges}${tagBadges}</div>
+        <div class="badges">${sourceBadge}${modelBadges}${tagBadges}</div>
       `;
       item.addEventListener("click", () => renderConversation(conv.internalId, { closeSidebar: true, resetScroll: true }));
       convList.appendChild(item);
@@ -817,13 +1048,39 @@ const $ = (selector) => document.querySelector(selector);
     });
   }
 
+  function formatSearchResultGroups(groups) {
+    if (!Array.isArray(groups) || !groups.length) return "";
+    const lines = [];
+    groups.forEach((group) => {
+      const entries = Array.isArray(group?.entries) ? group.entries : [];
+      entries.forEach((entry) => {
+        const title = String(entry?.title || entry?.name || entry?.attribution || "搜索结果");
+        const url = String(entry?.url || entry?.link || "");
+        const snippet = String(entry?.snippet || entry?.text || entry?.description || "").trim();
+        lines.push(`- ${title}${url ? `\n  ${url}` : ""}${snippet ? `\n  ${snippet}` : ""}`);
+      });
+    });
+    return lines.length ? `搜索结果（${lines.length}）\n${lines.join("\n")}` : "";
+  }
+
+  function toolDisplayName(message, content, metadata, imageTokens) {
+    const recipient = String(message?.recipient || "");
+    const authorName = String(message?.author?.name || "");
+    const contentType = String(content?.content_type || "");
+    if (metadata?.image_gen_title || metadata?.ghostrider || imageTokens.length) return metadata?.image_gen_title || "图像生成";
+    if (/web/i.test(recipient) || /web/i.test(authorName) || metadata?.search_queries || metadata?.search_result_groups) return "网页搜索";
+    if (/python/i.test(recipient) || /python/i.test(authorName)) return contentType === "code" ? "Python 代码" : "Python 输出";
+    if (contentType === "code") return "工具调用";
+    if (contentType === "execution_output") return "执行结果";
+    return authorName || recipient || "工具过程";
+  }
+
   function extractMessageFromNode(node, nodeId) {
     const message = node?.message;
     if (!message || !message.author) return null;
     const sourceRole = message.author.role;
-    const role = sourceRole === "user" || sourceRole === "assistant" ? sourceRole : "system";
-
     const content = message.content || {};
+    const metadata = message.metadata || {};
     const textParts = [];
     const imageTokens = [];
     const addText = (value) => { if (typeof value === "string") textParts.push(value); };
@@ -852,31 +1109,45 @@ const $ = (selector) => document.querySelector(selector);
       });
     }
 
-    const metadata = message.metadata || {};
     const attachments = Array.isArray(metadata.attachments) ? metadata.attachments : [];
     attachments.forEach((attachment) => {
       if (attachment?.id) imageTokens.push(String(attachment.id));
       if (attachment?.name && /^image\//.test(attachment.mime_type || "")) imageTokens.push(String(attachment.name));
     });
 
-    const text = textParts.filter((part) => part != null).join("\n").trim();
+    const recipient = String(message.recipient || "");
+    const isToolProcess = sourceRole === "tool"
+      || (!!recipient && recipient !== "all")
+      || content.content_type === "code"
+      || content.content_type === "execution_output";
+    const role = isToolProcess ? "tool" : sourceRole === "user" || sourceRole === "assistant" ? sourceRole : "system";
+    let text = textParts.filter((part) => part != null).join("\n").trim();
+    if (!text && isToolProcess) text = formatSearchResultGroups(metadata.search_result_groups);
     return {
       nodeId: nodeId || node?.id || message.id,
       messageId: message.id || nodeId,
       role,
       sourceRole,
+      authorName: String(message.author?.name || ""),
+      recipient,
+      channel: String(message.channel || ""),
       contentType: String(content.content_type || ""),
       isThinking: content.content_type === "thoughts",
+      isToolProcess,
       text,
       time: Number(message.create_time || 0),
-      model: metadata.model_slug || metadata.default_model_slug || "",
+      model: metadata.resolved_model_slug || metadata.model_slug || metadata.default_model_slug || "",
       images: Array.from(new Set(imageTokens)),
       contextCitations: extractContextCitations(metadata),
+      toolLabel: toolDisplayName(message, content, metadata, imageTokens),
+      toolLanguage: String(content.language || ""),
+      visuallyHidden: metadata.is_visually_hidden_from_conversation === true,
+      rawMessage: message,
     };
   }
 
   function isDisplayMessage(msg) {
-    return !!msg && (msg.text || (Array.isArray(msg.images) && msg.images.length));
+    return !!msg && (msg.isToolProcess || msg.text || (Array.isArray(msg.images) && msg.images.length));
   }
 
   function extractPathMessages(raw, convId) {
@@ -897,7 +1168,7 @@ const $ = (selector) => document.querySelector(selector);
       if (isDisplayMessage(msg)) {
         msg.branchInfo = directBranchInfo || pendingBranchInfo;
         messages.push(msg);
-        pendingBranchInfo = null;
+        if (!msg.isToolProcess) pendingBranchInfo = null;
       }
     });
 
@@ -934,7 +1205,21 @@ const $ = (selector) => document.querySelector(selector);
       if (!messages.length) {
         chat.innerHTML = '<div class="empty">这个窗口里没有可显示的 user / assistant 消息。</div>';
       } else {
-        messages.forEach((message, index) => renderMessage(message, index, conv));
+        let pendingTools = [];
+        const flushTools = () => {
+          if (!pendingTools.length) return;
+          renderToolGroup(pendingTools, conv);
+          pendingTools = [];
+        };
+        messages.forEach((message, index) => {
+          if (message.isToolProcess) {
+            pendingTools.push(message);
+            return;
+          }
+          flushTools();
+          renderMessage(message, index, conv);
+        });
+        flushTools();
       }
       renderConversationList();
       updateHeaderActions();
@@ -1072,6 +1357,106 @@ const $ = (selector) => document.querySelector(selector);
     return footer;
   }
 
+  function ensureToolTarget(targetId) {
+    let target = document.getElementById(targetId);
+    if (target) return target;
+    const fold = Array.from(document.querySelectorAll(".tool-fold")).find((item) => item._qixinMessageIds?.has(targetId));
+    if (!fold) return null;
+    if (typeof fold._qixinBuild === "function") fold._qixinBuild();
+    fold.open = true;
+    return document.getElementById(targetId);
+  }
+
+  function renderToolGroup(toolMessages, conv) {
+    const article = document.createElement("article");
+    article.className = "msg tool-group";
+    const roleWrap = document.createElement("div");
+    roleWrap.className = "role tool";
+    const panel = document.createElement("div");
+    panel.className = "tool-panel";
+    const details = document.createElement("details");
+    details.className = "context-fold tool-fold";
+    const summary = document.createElement("summary");
+    const title = document.createElement("span");
+    title.textContent = `工具过程（${toolMessages.length}）`;
+    const counts = new Map();
+    toolMessages.forEach((message) => counts.set(message.toolLabel, (counts.get(message.toolLabel) || 0) + 1));
+    const meta = document.createElement("span");
+    meta.className = "context-summary-meta";
+    meta.textContent = Array.from(counts.entries()).map(([label, count]) => `${label} ${count}`).join(" · ");
+    summary.append(title, meta);
+
+    const list = document.createElement("div");
+    list.className = "tool-list";
+    let built = false;
+    const buildList = () => {
+      if (built) return;
+      built = true;
+      toolMessages.forEach((message, index) => {
+        const entry = document.createElement("section");
+        entry.className = "tool-entry";
+        entry.id = `msg-${message.nodeId || message.messageId || index}`;
+        const head = document.createElement("div");
+        head.className = "tool-entry-head";
+        const entryTitle = document.createElement("span");
+        entryTitle.className = "tool-entry-title";
+        entryTitle.textContent = message.toolLabel || "工具过程";
+        const entryMeta = document.createElement("span");
+        entryMeta.className = "tool-entry-meta";
+        entryMeta.textContent = [
+          message.time ? formatTime(message.time, true) : "",
+          message.contentType,
+          message.model,
+          message.visuallyHidden ? "界面隐藏" : "",
+        ].filter(Boolean).join(" · ");
+        head.append(entryTitle, entryMeta);
+        entry.appendChild(head);
+
+        if (message.text) {
+          if (message.contentType === "code") {
+            const pre = document.createElement("pre");
+            const code = document.createElement("code");
+            code.className = `language-${message.toolLanguage || "text"}`;
+            code.textContent = message.text;
+            pre.appendChild(code);
+            entry.appendChild(pre);
+          } else {
+            const body = document.createElement("div");
+            body.className = "md";
+            body.innerHTML = renderMarkdown(message.text);
+            entry.appendChild(body);
+          }
+        }
+        renderImages(message.images || [], entry, "tool");
+
+        const rawDetails = document.createElement("details");
+        rawDetails.className = "context-fold raw-fold";
+        const rawSummary = document.createElement("summary");
+        rawSummary.textContent = "原始字段";
+        const rawPre = document.createElement("pre");
+        rawPre.className = "raw-json";
+        rawPre.dataset.loaded = "0";
+        rawDetails.addEventListener("toggle", () => {
+          if (!rawDetails.open || rawPre.dataset.loaded === "1") return;
+          rawPre.textContent = JSON.stringify(message.rawMessage || {}, null, 2);
+          rawPre.dataset.loaded = "1";
+        });
+        rawDetails.append(rawSummary, rawPre);
+        entry.appendChild(rawDetails);
+        list.appendChild(entry);
+      });
+    };
+    details._qixinBuild = buildList;
+    details._qixinMessageIds = new Set(toolMessages.map((message, index) => `msg-${message.nodeId || message.messageId || index}`));
+    details.addEventListener("toggle", () => { if (details.open) buildList(); });
+
+    details.append(summary, list);
+    panel.appendChild(details);
+    roleWrap.appendChild(panel);
+    article.appendChild(roleWrap);
+    chat.appendChild(article);
+  }
+
   function renderMessage(message, index, conv) {
     const article = document.createElement("article");
     article.className = `msg ${message.role}`;
@@ -1129,8 +1514,10 @@ const $ = (selector) => document.querySelector(selector);
       branchSelections.set(branchKey(conv.internalId, info.parentId), newIndex);
       renderConversation(conv.internalId, { closeSidebar: false, resetScroll: false });
       setTimeout(() => {
-        const target = document.getElementById(`msg-${info.siblings[newIndex]}`);
+        const target = ensureToolTarget(`msg-${info.siblings[newIndex]}`);
         if (target) {
+          const parentFold = target.closest("details");
+          if (parentFold) parentFold.open = true;
           target.scrollIntoView({ behavior: "smooth", block: "center" });
           target.classList.add("highlight");
           setTimeout(() => target.classList.remove("highlight"), 1600);
@@ -1254,6 +1641,7 @@ const $ = (selector) => document.querySelector(selector);
     modalContent.innerHTML = `
       <div class="form-row"><label>标题</label><div class="text-box">${escapeHtml(conv.title)}</div></div>
       <div class="form-row"><label>conversation_id</label><div class="text-box">${escapeHtml(conv.id)}</div></div>
+      <div class="form-row"><label>数据来源</label><div class="badges"><span class="badge source">${escapeHtml(sourceLabel(conv.sources))}</span></div>${conv.sourceFiles.length ? `<div class="text-box" style="margin-top:7px">${escapeHtml(conv.sourceFiles.join("\n"))}</div>` : ""}</div>
       <div class="form-row"><label>模型筛选</label><div class="badges">${conv.modelLabels.map((label) => `<span class="badge">${escapeHtml(label)}</span>`).join("")}</div></div>
       <div class="form-row"><label>原始模型</label><div class="text-box">${escapeHtml(formatModelDetails(conv.raw))}</div></div>
       <div class="form-row"><label>字符统计</label><div class="text-box">${escapeHtml(formatStatsLine("当前分支", currentStats))}<br>${escapeHtml(formatStatsLine("全部分支", allStats))}</div></div>
@@ -1316,8 +1704,10 @@ const $ = (selector) => document.querySelector(selector);
       item.addEventListener("click", () => {
         renderConversation(item.dataset.convId, { closeSidebar: false, resetScroll: false });
         setTimeout(() => {
-          const target = document.getElementById(item.dataset.msgId);
+          const target = ensureToolTarget(item.dataset.msgId);
           if (target) {
+            const parentFold = target.closest("details");
+            if (parentFold) parentFold.open = true;
             target.scrollIntoView({ behavior: "smooth", block: "start" });
             target.classList.add("highlight");
             setTimeout(() => target.classList.remove("highlight"), 1600);
@@ -1352,6 +1742,7 @@ const $ = (selector) => document.querySelector(selector);
     clearSearch.style.display = "none";
   });
   pickFile?.addEventListener("change", async (event) => loadConversationFiles(event.target.files || []));
+  pickResponse?.addEventListener("change", async (event) => loadResponseFiles(event.target.files || []));
   windowInfo?.addEventListener("click", showWindowDetail);
   closeModal?.addEventListener("click", closeWindowDetail);
   modal?.addEventListener("click", (event) => { if (event.target === modal) closeWindowDetail(); });
